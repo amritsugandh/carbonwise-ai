@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://carbonwise-ai-41b63.web.app/sitemap.xml
