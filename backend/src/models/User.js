@@ -57,6 +57,8 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+userSchema.index({ ecoPoints: -1, sustainabilityScore: -1 });
+
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.__v;

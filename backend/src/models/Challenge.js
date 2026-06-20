@@ -46,4 +46,6 @@ const challengeSchema = new mongoose.Schema(
   }
 );
 
+challengeSchema.index({ isActive: 1, points: -1 });
+
 module.exports = mongoose.model('Challenge', challengeSchema);

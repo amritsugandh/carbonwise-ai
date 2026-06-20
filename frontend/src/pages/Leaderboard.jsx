@@ -83,7 +83,7 @@ const Leaderboard = () => {
                 >
                   <div className="w-14 h-14 bg-carbon-700 rounded-full flex items-center justify-center overflow-hidden mb-2 border-2 border-gray-400">
                     {top3[1]?.avatar ? (
-                      <img src={top3[1].avatar} alt="" className="w-full h-full object-cover" />
+                      <img src={top3[1].avatar} alt={`${top3[1]?.username}'s avatar`} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-xl font-black text-white">{top3[1]?.username?.[0]?.toUpperCase()}</span>
                     )}
@@ -104,7 +104,7 @@ const Leaderboard = () => {
                 >
                   <div className="w-18 h-18 w-16 h-16 bg-yellow-600/20 rounded-full flex items-center justify-center overflow-hidden mb-2 border-2 border-yellow-400">
                     {top3[0]?.avatar ? (
-                      <img src={top3[0].avatar} alt="" className="w-full h-full object-cover" />
+                      <img src={top3[0].avatar} alt={`${top3[0]?.username}'s avatar`} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-2xl font-black text-yellow-400">{top3[0]?.username?.[0]?.toUpperCase()}</span>
                     )}
@@ -126,7 +126,7 @@ const Leaderboard = () => {
                 >
                   <div className="w-14 h-14 bg-carbon-700 rounded-full flex items-center justify-center overflow-hidden mb-2 border-2 border-amber-600">
                     {top3[2]?.avatar ? (
-                      <img src={top3[2].avatar} alt="" className="w-full h-full object-cover" />
+                      <img src={top3[2].avatar} alt={`${top3[2]?.username}'s avatar`} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-xl font-black text-white">{top3[2]?.username?.[0]?.toUpperCase()}</span>
                     )}
@@ -167,7 +167,7 @@ const Leaderboard = () => {
                     {/* Avatar */}
                     <div className="w-10 h-10 bg-carbon-700 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                       {user.avatar ? (
-                        <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                        <img src={user.avatar} alt={`${user.username}'s avatar`} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-sm font-bold text-white">{user.username?.[0]?.toUpperCase()}</span>
                       )}
