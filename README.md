@@ -8,8 +8,8 @@ A production-ready, full-stack AI-powered sustainability platform that helps use
 
 ## 🚀 Live Demo
 
-- **Frontend**: Firebase Hosting → `https://your-project.web.app`
-- **Backend API**: Google Cloud Run → `https://carbonwise-api-xxxx-uc.a.run.app`
+- **Frontend**: Firebase Hosting → [https://carbonwise-ai-41b63.web.app](https://carbonwise-ai-41b63.web.app)
+- **Backend API**: Google Cloud Run → [https://carbonwise-api-340593396676.us-central1.run.app](https://carbonwise-api-340593396676.us-central1.run.app)
 
 ---
 
@@ -240,31 +240,31 @@ Update `frontend/.firebaserc` with your project ID.
 cd backend
 
 # Set your project
-gcloud config set project YOUR_PROJECT_ID
+gcloud config set project carbonwise-ai-41b63
 
 # Enable required APIs
 gcloud services enable run.googleapis.com
 gcloud services enable containerregistry.googleapis.com
 
 # Build and push Docker image
-gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/carbonwise-api
+gcloud builds submit --tag gcr.io/carbonwise-ai-41b63/carbonwise-api
 
 # Create secrets in Secret Manager
-echo -n "your-mongodb-uri" | gcloud secrets create mongodb-uri --data-file=-
-echo -n "your-gemini-key" | gcloud secrets create gemini-api-key --data-file=-
-echo -n "your-firebase-project" | gcloud secrets create firebase-project-id --data-file=-
+echo -n "your-mongodb-uri" | gcloud secrets versions add mongodb-uri --data-file=-
+echo -n "your-gemini-key" | gcloud secrets versions add gemini-api-key --data-file=-
+echo -n "your-firebase-project" | gcloud secrets versions add firebase-project-id --data-file=-
 # ... repeat for firebase-private-key and firebase-client-email
 
 # Deploy to Cloud Run
 gcloud run deploy carbonwise-api \
-  --image gcr.io/YOUR_PROJECT_ID/carbonwise-api \
+  --image gcr.io/carbonwise-ai-41b63/carbonwise-api \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
   --port 5000 \
   --memory 512Mi \
   --set-env-vars NODE_ENV=production \
-  --set-env-vars FRONTEND_URL=https://your-project.web.app
+  --set-env-vars FRONTEND_URL=https://carbonwise-ai-41b63.web.app
 ```
 
 After deployment, update `VITE_API_URL` in your Firebase hosting environment with the Cloud Run URL, then redeploy the frontend.
