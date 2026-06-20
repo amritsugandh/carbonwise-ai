@@ -57,6 +57,15 @@ app.use(morgan('combined', {
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 app.use('/api/', generalLimiter);
 
+// ── Root Route ────────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Welcome to the CarbonWise API',
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.json({

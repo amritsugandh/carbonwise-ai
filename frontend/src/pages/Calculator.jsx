@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { carbonAPI } from '../services/api';
+import { auth } from '../firebase/config';
 import EmissionBreakdown from '../components/ui/EmissionBreakdown';
 import ScoreGauge from '../components/ui/ScoreGauge';
 import { formatNumber } from '../utils/helpers';
@@ -114,17 +115,26 @@ const Calculator = () => {
     if (!result) return;
     setSaving(true);
     try {
+      // Force-refresh Firebase token before saving to avoid stale token
+      if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true);
+      }
       await carbonAPI.save(result.inputPayload);
       toast.success('Carbon data saved! 🌿');
       navigate('/dashboard');
     } catch (err) {
-      const msg = err?.response?.data?.message || err.message;
-      if (err?.response?.status === 503 || msg?.includes('database')) {
-        toast.error('Database not connected. Connect MongoDB Atlas to save records.');
-      } else if (err?.response?.status === 401) {
-        toast.error('Please log in again to save your data.');
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.message || err.message || '';
+
+      if (status === 401) {
+        toast.error('Session expired. Please refresh the page and try again.');
+      } else if (status === 503 || msg.includes('database') || msg.includes('buffering')) {
+        toast.error('Database connection issue. Please try again in a moment.');
+      } else if (status === 400) {
+        toast.error('Invalid data: ' + msg);
       } else {
-        toast.error('Failed to save: ' + msg);
+        toast.error('Failed to save. Please try again.');
+        console.error('Save error:', err);
       }
     } finally {
       setSaving(false);

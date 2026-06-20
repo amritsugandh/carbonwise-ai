@@ -4,7 +4,7 @@ const { getChatResponse, getRecommendationsResponse } = require('../utils/localA
 const logger = require('../utils/logger');
 
 const isValidGeminiKey = () => {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GEMINI_API_KEY?.trim();
   if (!key || key.startsWith('YOUR_')) return false;
   // Support old standard keys (AIzaSy...) and new auth keys (AQ....)
   return key.startsWith('AIzaSy') || key.startsWith('AQ.');
@@ -14,7 +14,7 @@ const isValidGeminiKey = () => {
 let _geminiClient = null;
 const getGeminiClient = () => {
   if (_geminiClient) return _geminiClient;
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GEMINI_API_KEY?.trim();
   const genAI = new GoogleGenerativeAI(key);
   const modelName = key.startsWith('AQ.') ? 'gemini-2.0-flash' : 'gemini-1.5-flash';
   _geminiClient = genAI.getGenerativeModel({ model: modelName });

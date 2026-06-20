@@ -6,7 +6,7 @@ const logger = require('../utils/logger');
 
 // Reuse same key validation logic as aiController
 const isValidGeminiKey = () => {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GEMINI_API_KEY?.trim();
   if (!key || key.startsWith('YOUR_')) return false;
   return key.startsWith('AIzaSy') || key.startsWith('AQ.');
 };
@@ -30,7 +30,7 @@ const generatePrediction = async (req, res) => {
     // Only attempt Gemini if key is valid
     if (isValidGeminiKey()) {
       try {
-        const key = process.env.GEMINI_API_KEY;
+        const key = process.env.GEMINI_API_KEY?.trim();
         const genAI = new GoogleGenerativeAI(key);
         const modelName = key.startsWith('AQ.') ? 'gemini-2.0-flash' : 'gemini-1.5-flash';
         const model = genAI.getGenerativeModel({ model: modelName });

@@ -6,7 +6,7 @@ let firebaseApp;
 const initializeFirebase = () => {
   if (firebaseApp) return firebaseApp;
 
-  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
   if (!projectId || projectId.startsWith('YOUR_')) {
     logger.warn('Firebase credentials not configured. Auth will be disabled.');
     logger.warn('Set FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL in backend/.env');
@@ -16,8 +16,8 @@ const initializeFirebase = () => {
   try {
     const serviceAccount = {
       projectId,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n').replace(/\r/g, '').trim(),
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL?.trim(),
     };
 
     firebaseApp = admin.initializeApp({
