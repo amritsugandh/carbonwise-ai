@@ -26,13 +26,22 @@ const startServer = async () => {
     });
 
     // Graceful shutdown
-    process.on('SIGTERM', () => {
-      logger.info('SIGTERM received. Shutting down gracefully...');
+    const handleShutdown = async (signal) => {
+      logger.info(`${signal} received. Shutting down gracefully...`);
+      try {
+        await require('mongoose').connection.close();
+        logger.info('MongoDB connection closed');
+      } catch (dbErr) {
+        logger.error(`Error closing MongoDB: ${dbErr.message}`);
+      }
       server.close(() => {
         logger.info('Server closed');
         process.exit(0);
       });
-    });
+    };
+
+    process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+    process.on('SIGINT', () => handleShutdown('SIGINT'));
 
   } catch (error) {
     logger.error(`Server startup failed: ${error.message}`);

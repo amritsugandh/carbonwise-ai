@@ -81,5 +81,18 @@ describe('Leaderboard Controller Endpoints', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.userRank).toBeNull();
     });
+
+    test('should return 500 when database query fails', async () => {
+      User.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockRejectedValue(new Error('DB Query Failure'))
+      });
+
+      const res = await request(app).get('/api/leaderboard');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('DB Query Failure');
+    });
   });
 });

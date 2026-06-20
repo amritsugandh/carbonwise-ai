@@ -51,7 +51,7 @@ const Profile = () => {
           <div className="relative">
             <div className="w-24 h-24 bg-primary-600/20 border-2 border-primary-600/40 rounded-2xl flex items-center justify-center overflow-hidden">
               {user?.photoURL ? (
-                <img src={user.photoURL} alt="avatar" className="w-full h-full object-cover" />
+                <img src={user.photoURL} alt={`${dbUser?.username || 'User'}'s profile picture`} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-4xl font-black text-primary-400">
                   {(dbUser?.username || user?.email)?.[0]?.toUpperCase()}

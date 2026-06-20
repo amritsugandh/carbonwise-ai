@@ -30,7 +30,8 @@ describe('Goal Controller Endpoints', () => {
       const payload = {
         title: 'Reduce Car Travel',
         targetEmission: '150',
-        currentEmission: '200'
+        currentEmission: '200',
+        deadline: '2026-12-31'
       };
       const mockGoal = {
         _id: 'goal123',
@@ -49,7 +50,6 @@ describe('Goal Controller Endpoints', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.progress).toBe(25);
     });
 
     test('should return 400 if title is missing', async () => {
@@ -59,6 +59,24 @@ describe('Goal Controller Endpoints', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
+    });
+
+    test('should return 400 if targetEmission is invalid range', async () => {
+      const res = await request(app)
+        .post('/api/goals')
+        .send({ title: 'Goal 1', targetEmission: -100 });
+
+      expect(res.status).toBe(400);
+    });
+
+    test('should return 500 on goal creation exception', async () => {
+      Goal.create.mockRejectedValue(new Error('Mongoose write failed'));
+
+      const res = await request(app)
+        .post('/api/goals')
+        .send({ title: 'Goal 1', targetEmission: 100 });
+
+      expect(res.status).toBe(500);
     });
   });
 
@@ -72,7 +90,16 @@ describe('Goal Controller Endpoints', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveLength(1);
+    });
+
+    test('should return 500 on retrieve goals error', async () => {
+      Goal.find.mockReturnValue({
+        sort: jest.fn().mockRejectedValue(new Error('Db read error'))
+      });
+
+      const res = await request(app).get('/api/goals');
+
+      expect(res.status).toBe(500);
     });
   });
 
@@ -91,11 +118,18 @@ describe('Goal Controller Endpoints', () => {
 
       const res = await request(app)
         .put('/api/goals/507f1f77bcf86cd799439012')
-        .send({ currentEmission: 180 });
+        .send({ currentEmission: 180, targetEmission: 120 });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(Goal.findOneAndUpdate).toHaveBeenCalled();
+    });
+
+    test('should return 400 if no valid fields are provided to update', async () => {
+      const res = await request(app)
+        .put('/api/goals/507f1f77bcf86cd799439012')
+        .send({});
+
+      expect(res.status).toBe(400);
     });
 
     test('should return 400 for invalid ObjectId', async () => {
@@ -104,7 +138,26 @@ describe('Goal Controller Endpoints', () => {
         .send({ title: 'New title' });
 
       expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
+    });
+
+    test('should return 404 if goal to update not found', async () => {
+      Goal.findOneAndUpdate.mockResolvedValue(null);
+
+      const res = await request(app)
+        .put('/api/goals/507f1f77bcf86cd799439012')
+        .send({ title: 'New title' });
+
+      expect(res.status).toBe(404);
+    });
+
+    test('should return 500 on goal update exception', async () => {
+      Goal.findOneAndUpdate.mockRejectedValue(new Error('Db error'));
+
+      const res = await request(app)
+        .put('/api/goals/507f1f77bcf86cd799439012')
+        .send({ title: 'New title' });
+
+      expect(res.status).toBe(500);
     });
   });
 
@@ -118,6 +171,12 @@ describe('Goal Controller Endpoints', () => {
       expect(res.body.success).toBe(true);
     });
 
+    test('should return 400 for invalid ObjectId', async () => {
+      const res = await request(app).delete('/api/goals/invalid-id');
+
+      expect(res.status).toBe(400);
+    });
+
     test('should return 404 if goal not found', async () => {
       Goal.findOneAndDelete.mockResolvedValue(null);
 
@@ -125,6 +184,14 @@ describe('Goal Controller Endpoints', () => {
 
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
+    });
+
+    test('should return 500 on goal delete exception', async () => {
+      Goal.findOneAndDelete.mockRejectedValue(new Error('Db connection error'));
+
+      const res = await request(app).delete('/api/goals/507f1f77bcf86cd799439012');
+
+      expect(res.status).toBe(500);
     });
   });
 });

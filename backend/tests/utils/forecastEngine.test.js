@@ -75,4 +75,47 @@ describe('Forecast Engine Utility', () => {
       riskLevel: { level: 'Minimal', color: 'green' }
     }));
   });
+
+  test('should detect decreasing trend and high risk level', () => {
+    const historicalData = [
+      { totalEmission: 100, createdAt: new Date('2026-05-01') },
+      { totalEmission: 200, createdAt: new Date('2026-04-01') }
+    ];
+
+    const result = generateForecast(historicalData);
+    // May: 100, Apr: 200
+    // Predicted: 100 * 0.6 + 200 * 0.4 = 140
+    // Trend: percentageChange = ((100 - 200) / 200) * 100 = -50% (decreasing)
+    // Risk: growth = ((140 - 100) / 100) * 100 = 40% (High risk)
+    expect(result.trend.direction).toBe('decreasing');
+    expect(result.riskLevel.level).toBe('High');
+  });
+
+  test('should detect stable trend (under 5%) and moderate risk level', () => {
+    const historicalData = [
+      { totalEmission: 100, createdAt: new Date('2026-05-01') },
+      { totalEmission: 102, createdAt: new Date('2026-04-01') }
+    ];
+
+    const result = generateForecast(historicalData);
+    // May: 100, Apr: 102
+    // Predicted: 100 * 0.6 + 102 * 0.4 = 100.8
+    // Trend: percentageChange = ((100 - 102) / 102) * 100 = -1.96% (stable)
+    // Risk: growth = ((100.8 - 100) / 100) * 100 = 0.8% (Low risk)
+    expect(result.trend.direction).toBe('stable');
+    expect(result.riskLevel.level).toBe('Low');
+  });
+
+  test('should detect moderate risk level', () => {
+    const historicalData = [
+      { totalEmission: 100, createdAt: new Date('2026-05-01') },
+      { totalEmission: 130, createdAt: new Date('2026-04-01') }
+    ];
+
+    const result = generateForecast(historicalData);
+    // May: 100, Apr: 130
+    // Predicted: 100 * 0.6 + 130 * 0.4 = 112
+    // Risk: growth = ((112 - 100) / 100) * 100 = 12% (Moderate risk)
+    expect(result.riskLevel.level).toBe('Moderate');
+  });
 });

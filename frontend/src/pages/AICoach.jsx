@@ -149,7 +149,7 @@ const AICoach = () => {
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">🤖 AI Recommendations</h3>
-              <button onClick={() => setRecommendations(null)} className="text-carbon-500 hover:text-white text-sm">✕</button>
+              <button onClick={() => setRecommendations(null)} className="text-carbon-500 hover:text-white text-sm" aria-label="Close recommendations">✕</button>
             </div>
 
             {recommendations.summary && (
@@ -280,6 +280,7 @@ const AICoach = () => {
             onClick={() => sendMessage()}
             disabled={loading || !input.trim()}
             className="btn-primary px-4 disabled:opacity-50"
+            aria-label="Send message"
           >
             {loading ? <Spinner size="sm" /> : '→'}
           </button>

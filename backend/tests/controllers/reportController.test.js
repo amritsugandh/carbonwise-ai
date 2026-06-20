@@ -81,6 +81,43 @@ describe('Report Controller Endpoints', () => {
       expect(res.body.data.reportId).toBe('report123');
       expect(Report.create).toHaveBeenCalled();
     });
+
+    test('should generate report without records, goals, or prediction', async () => {
+      User.findById.mockResolvedValue({
+        username: 'testuser',
+        email: 'test@example.com'
+      });
+
+      CarbonRecord.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([])
+      });
+
+      Goal.find.mockResolvedValue([]);
+
+      Prediction.findOne.mockReturnValue({
+        sort: jest.fn().mockResolvedValue(null)
+      });
+
+      Report.create.mockResolvedValue({
+        _id: 'report123',
+        reportData: {}
+      });
+
+      const res = await request(app).post('/api/reports/generate');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    test('should return 500 on report generation failure', async () => {
+      User.findById.mockRejectedValue(new Error('Database disconnected'));
+
+      const res = await request(app).post('/api/reports/generate');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
   });
 
   describe('GET /api/reports', () => {
@@ -94,6 +131,17 @@ describe('Report Controller Endpoints', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data).toHaveLength(2);
+    });
+
+    test('should return 500 on get reports db exception', async () => {
+      Report.find.mockReturnValue({
+        sort: jest.fn().mockRejectedValue(new Error('Connection failure'))
+      });
+
+      const res = await request(app).get('/api/reports');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
     });
   });
 
@@ -117,6 +165,15 @@ describe('Report Controller Endpoints', () => {
       const res = await request(app).get('/api/reports/download/report123');
 
       expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+
+    test('should return 500 on download db exception', async () => {
+      Report.findOne.mockRejectedValue(new Error('Connection failure'));
+
+      const res = await request(app).get('/api/reports/download/report123');
+
+      expect(res.status).toBe(500);
       expect(res.body.success).toBe(false);
     });
   });

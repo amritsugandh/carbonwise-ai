@@ -57,7 +57,7 @@ const Sidebar = ({ mobile, onClose }) => {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-primary-600/20 border border-primary-600/30 flex items-center justify-center overflow-hidden">
               {dbUser.avatar ? (
-                <img src={dbUser.avatar} alt="avatar" className="w-full h-full object-cover" />
+                <img src={dbUser.avatar} alt={`${dbUser.username || 'User'}'s avatar`} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-sm font-bold text-primary-400">
                   {(dbUser.username || dbUser.email)?.[0]?.toUpperCase()}

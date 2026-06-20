@@ -33,7 +33,10 @@ const initializeFirebase = () => {
 };
 
 const getFirebaseAdmin = () => {
-  if (!firebaseApp) initializeFirebase();
+  if (!firebaseApp) {
+    const app = initializeFirebase();
+    if (!app) return null;
+  }
   return admin;
 };
 

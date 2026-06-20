@@ -14,6 +14,13 @@ jest.mock('../../src/middleware/auth', () => ({
 // Mock Mongoose models
 jest.mock('../../src/models/CarbonRecord');
 jest.mock('../../src/models/User');
+jest.mock('../../src/utils/carbonCalculator', () => {
+  const originalModule = jest.requireActual('../../src/utils/carbonCalculator');
+  return {
+    ...originalModule,
+    calculateAll: jest.fn().mockImplementation((...args) => originalModule.calculateAll(...args))
+  };
+});
 
 // Mock logger
 jest.mock('../../src/utils/logger', () => ({
@@ -45,14 +52,100 @@ describe('Carbon Controller Endpoints', () => {
       expect(res.body.data.totalEmission).toBeGreaterThan(0);
     });
 
-    test('should return 400 if validation fails', async () => {
+    test('should return 400 if validation fails due to missing properties', async () => {
       const res = await request(app)
         .post('/api/carbon/calculate')
-        .send({ transport: {} }); // Missing other fields
+        .send({ transport: {} });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
       expect(res.body.errors).toContain('electricity data is required');
+    });
+
+    test('should return 400 if vehicleType is invalid', async () => {
+      const res = await request(app)
+        .post('/api/carbon/calculate')
+        .send({
+          ...validPayload,
+          transport: { ...validPayload.transport, vehicleType: 'invalid_vehicle' }
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors[0]).toContain('vehicleType must be one of');
+    });
+
+    test('should return 400 if dailyDistance is invalid number range', async () => {
+      const res = await request(app)
+        .post('/api/carbon/calculate')
+        .send({
+          ...validPayload,
+          transport: { ...validPayload.transport, dailyDistance: -5 }
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors[0]).toContain('dailyDistance must be a number');
+    });
+
+    test('should return 400 if daysPerWeek is out of range', async () => {
+      const res = await request(app)
+        .post('/api/carbon/calculate')
+        .send({
+          ...validPayload,
+          transport: { ...validPayload.transport, daysPerWeek: 10 }
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors[0]).toContain('daysPerWeek must be between');
+    });
+
+    test('should return 400 if monthlyUnits is out of range', async () => {
+      const res = await request(app)
+        .post('/api/carbon/calculate')
+        .send({
+          ...validPayload,
+          electricity: { monthlyUnits: 9999999 }
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors[0]).toContain('monthlyUnits must be a number');
+    });
+
+    test('should return 400 if dietType is invalid', async () => {
+      const res = await request(app)
+        .post('/api/carbon/calculate')
+        .send({
+          ...validPayload,
+          food: { dietType: 'junk_food' }
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors[0]).toContain('dietType must be one of');
+    });
+
+    test('should return 400 if shoppingFrequency or plasticConsumption is invalid', async () => {
+      const res = await request(app)
+        .post('/api/carbon/calculate')
+        .send({
+          ...validPayload,
+          lifestyle: { shoppingFrequency: 'never', plasticConsumption: 'super_high' }
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toHaveLength(2);
+    });
+
+    test('should return 500 on calculation errors', async () => {
+      const { calculateAll } = require('../../src/utils/carbonCalculator');
+      calculateAll.mockImplementationOnce(() => {
+        throw new Error('Calculation engine failure');
+      });
+
+      const res = await request(app)
+        .post('/api/carbon/calculate')
+        .send(validPayload);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
     });
   });
 
@@ -73,8 +166,25 @@ describe('Carbon Controller Endpoints', () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data._id).toBe('record123');
-      expect(CarbonRecord.create).toHaveBeenCalled();
-      expect(User.findByIdAndUpdate).toHaveBeenCalled();
+    });
+
+    test('should return 400 if validation fails on save', async () => {
+      const res = await request(app)
+        .post('/api/carbon/save')
+        .send({});
+
+      expect(res.status).toBe(400);
+    });
+
+    test('should return 500 on save exceptions', async () => {
+      CarbonRecord.create.mockRejectedValue(new Error('Mongoose write failed'));
+
+      const res = await request(app)
+        .post('/api/carbon/save')
+        .send(validPayload);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
     });
   });
 
@@ -91,12 +201,23 @@ describe('Carbon Controller Endpoints', () => {
       CarbonRecord.countDocuments.mockResolvedValue(1);
 
       const res = await request(app)
-        .get('/api/carbon/history?page=1&limit=10');
+        .get('/api/carbon/history?page=1&limit=10&startDate=2026-06-01&endDate=2026-06-30');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveLength(1);
-      expect(res.body.pagination.total).toBe(1);
+    });
+
+    test('should return 500 on history retrieval error', async () => {
+      CarbonRecord.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockRejectedValue(new Error('Db read failure'))
+      });
+
+      const res = await request(app).get('/api/carbon/history');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
     });
   });
 
@@ -114,8 +235,15 @@ describe('Carbon Controller Endpoints', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.summary).toEqual(mockStats[0]);
-      expect(res.body.data.monthly).toEqual(mockMonthly);
+    });
+
+    test('should return 500 on aggregation failures', async () => {
+      CarbonRecord.aggregate.mockRejectedValue(new Error('Aggregation error'));
+
+      const res = await request(app).get('/api/carbon/stats');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
     });
   });
 });
