@@ -4,7 +4,7 @@
   "description": "CarbonWise AI Backend API",
   "main": "index.js",
   "engines": {
-    "node": "20"
+    "node": ">=18"
   },
   "scripts": {
     "start": "node src/server.js",

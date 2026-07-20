@@ -13,6 +13,6 @@
     "dev": "npm run dev:backend & npm run dev:frontend"
   },
   "engines": {
-    "node": "20"
+    "node": ">=18"
   }
 }
